@@ -1,0 +1,59 @@
+//Blinks the Internal blue LED {GPIO2} when Motion is detected by PIR Sensor.//
+//PIR Sensor connected at D13 or GPIO13//
+
+#include <stdio.h>
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+#include "driver/gpio.h"
+
+// Define the GPIO pin for the PIR sensor
+#define PIR_SENSOR_PIN 13
+
+// Define the GPIO pin for the internal LED (GPIO 2)
+#define INTERNAL_LED_PIN 2
+
+void app_main(void) {
+    // Configure the PIR sensor pin as an input
+    gpio_config_t io_conf;
+    io_conf.intr_type = GPIO_INTR_DISABLE;      // No interrupt for the PIR sensor
+    io_conf.mode = GPIO_MODE_INPUT;             // Set pin mode to input
+    io_conf.pin_bit_mask = (1ULL << PIR_SENSOR_PIN); // Set the specific pin
+    io_conf.pull_down_en = GPIO_PULLDOWN_DISABLE; // No pull-down resistor
+    io_conf.pull_up_en = GPIO_PULLUP_ENABLE; // Enable pull-up resistor
+    gpio_config(&io_conf);
+
+    // Configure the internal LED pin (GPIO 2) as an output
+    io_conf.intr_type = GPIO_INTR_DISABLE;      // No interrupt for the LED pin
+    io_conf.mode = GPIO_MODE_OUTPUT;            // Set pin mode to output
+    io_conf.pin_bit_mask = (1ULL << INTERNAL_LED_PIN); // Set the specific pin
+    io_conf.pull_down_en = GPIO_PULLDOWN_DISABLE; // No pull-down resistor
+    io_conf.pull_up_en = GPIO_PULLUP_DISABLE;   // No pull-up resistor
+    gpio_config(&io_conf);
+
+    // Initialize the internal LED state
+    gpio_set_level(INTERNAL_LED_PIN, 0); // Ensure the LED is off initially
+
+    // Variables for PIR sensor state and previous state
+    int pir_state = 0;
+    int prev_pir_state = 0;
+
+    while (1) {
+        // Read the state of the PIR sensor
+        pir_state = gpio_get_level(PIR_SENSOR_PIN);
+
+        // Check if the PIR sensor state has changed
+        if (pir_state != prev_pir_state) {
+            if (pir_state == 1) {
+                printf("Motion detected!\n");
+                gpio_set_level(INTERNAL_LED_PIN, 1); // Turn internal LED on
+            } else {
+                printf("No motion detected.\n");
+                gpio_set_level(INTERNAL_LED_PIN, 0); // Turn internal LED off
+            }
+            prev_pir_state = pir_state;
+        }
+
+        // Delay for a short period before checking again
+        vTaskDelay(100 / portTICK_PERIOD_MS);
+    }
+}
