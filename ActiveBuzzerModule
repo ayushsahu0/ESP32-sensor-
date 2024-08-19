@@ -1,0 +1,36 @@
+//Active Buzzer Module at D18 or GPIO18//
+
+
+#include <stdio.h>
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+#include "driver/gpio.h"
+
+// Define the GPIO pin for the active buzzer
+#define BUZZER_PIN 18  // Change this pin according to your setup
+
+void app_main(void) {
+    // Configure the buzzer pin as an output
+    gpio_config_t io_conf;
+    io_conf.intr_type = GPIO_INTR_DISABLE;      // No interrupt for the buzzer pin
+    io_conf.mode = GPIO_MODE_OUTPUT;            // Set pin mode to output
+    io_conf.pin_bit_mask = (1ULL << BUZZER_PIN); // Set the specific pin
+    io_conf.pull_down_en = GPIO_PULLDOWN_DISABLE; // No pull-down resistor
+    io_conf.pull_up_en = GPIO_PULLUP_DISABLE;   // No pull-up resistor
+    gpio_config(&io_conf);
+
+    // Initialize the buzzer state (off)
+    gpio_set_level(BUZZER_PIN, 0); // Ensure the buzzer is off initially
+
+    while (1) {
+        // Turn the buzzer on
+        gpio_set_level(BUZZER_PIN, 1);
+        printf("Buzzer ON\n");
+        vTaskDelay(500 / portTICK_PERIOD_MS); // Delay for 500 milliseconds
+
+        // Turn the buzzer off
+        gpio_set_level(BUZZER_PIN, 0);
+        printf("Buzzer OFF\n");
+        vTaskDelay(500 / portTICK_PERIOD_MS); // Delay for 500 milliseconds
+    }
+}
